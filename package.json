@@ -1,0 +1,16 @@
+{
+  "name": "gsrp-kontroll",
+  "private": true,
+  "version": "0.1.0",
+  "description": "GSRP Kontroll: frivillig säkerhetskontroll som spelaren själv startar med en engångskod",
+  "main": "main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "test": "node test.cjs",
+    "build:win": "electron-builder --win --x64 --publish=never"
+  },
+  "devDependencies": {
+    "electron": "^45.2.3",
+    "electron-builder": "^26.18.0"
+  }
+}

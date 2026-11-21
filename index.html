@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:">
+<title>GSRP Kontroll</title>
+<style>
+:root{--bg:#eef1f7;--panel:#fff;--side:#f3f6fb;--ink:#101828;--mut:#667085;--line:#e3e8f0;--pri:#2f6bff;--ok:#12a150;--warn:#d98a00;--bad:#e03e3e}
+@media (prefers-color-scheme:dark){:root{--bg:#070a10;--panel:#0d121c;--side:#0a0e16;--ink:#e8eefb;--mut:#7f8da6;--line:#1c2535;--pri:#4d8dff;--ok:#2fd27c;--warn:#ffb020;--bad:#ff5d5d}}
+*{box-sizing:border-box}html,body{height:100%}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 system-ui,"Segoe UI",sans-serif;display:flex;flex-direction:column}
+header{display:flex;align-items:center;gap:10px;padding:14px 22px;background:var(--side);border-bottom:1px solid var(--line)}
+.logo{width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,var(--pri),#7a5cff)}header b{font-size:16px}header span{color:var(--mut)}
+main{flex:1;overflow:auto;padding:22px;max-width:860px;width:100%;margin:0 auto}
+h1{margin:0 0 6px;font-size:22px}p{margin:6px 0}.mut{color:var(--mut)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin:14px 0}
+.what{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.item{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--side)}.item b{display:block}.item small{color:var(--mut)}
+.not{border-left:4px solid var(--ok);padding-left:12px}.not li{margin:3px 0}ul{margin:6px 0;padding-left:18px}
+input[type=text]{width:100%;font:700 26px/1.2 ui-monospace,Consolas,monospace;letter-spacing:6px;text-align:center;text-transform:uppercase;padding:12px;border-radius:12px;border:2px solid var(--line);background:var(--panel);color:var(--ink)}
+input[type=text]:focus{outline:none;border-color:var(--pri)}
+label.chk{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--line);border-radius:10px;cursor:pointer}
+button{font:inherit;font-weight:700;border:0;border-radius:10px;padding:12px 18px;cursor:pointer;background:var(--pri);color:#fff}
+button.alt{background:transparent;color:var(--ink);border:1px solid var(--line);font-weight:600}button:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}.err{color:var(--bad);font-weight:600;margin-top:8px}
+.bar{height:12px;border-radius:99px;background:var(--line);overflow:hidden;margin:12px 0}.bar i{display:block;height:100%;width:40%;background:linear-gradient(90deg,var(--pri),#7a5cff);animation:slide 1.4s infinite ease-in-out}
+@keyframes slide{0%{margin-left:-40%}100%{margin-left:100%}}
+.counts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.counts div{border:1px solid var(--line);border-radius:10px;padding:10px;text-align:center;background:var(--side)}.counts b{font-size:22px;display:block}
+.cur{font-family:ui-monospace,Consolas,monospace;font-size:12px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pill{display:inline-block;border-radius:99px;padding:2px 10px;font-size:12px;font-weight:700;color:#fff}.p-bekraftad{background:var(--bad)}.p-sannolik{background:var(--warn)}.p-osaker{background:var(--pri)}.p-ingen{background:var(--ok)}
+.f{border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin:6px 0;background:var(--side)}.f small{color:var(--mut);display:block;word-break:break-all}
+.hide{display:none}
+</style>
+</head>
+<body>
+<header><div class="logo"></div><b>GSRP Kontroll</b><span>· frivillig säkerhetskontroll</span></header>
+<main>
+
+<section id="s1">
+  <h1>Innan vi börjar</h1>
+  <p class="mut">En administratör på GSRP har bett dig köra den här kontrollen. Den är frivillig. Du ser här exakt vad den gör, och du kan avbryta när som helst.</p>
+  <div class="card">
+    <b>Vad kontrolleras, och varför</b>
+    <div class="what" style="margin-top:10px">
+      <div class="item"><b>Filer på dina diskar</b><small>Jämförs med en lista över kända fusk-, DDoS- och stöldprogram (namn, mapp och fingeravtryck). Skript kollas efter tecken på att de stjäl inloggningar.</small></div>
+      <div class="item"><b>Program som körs nu</b><small>För att se om ett känt fuskverktyg är igång.</small></div>
+      <div class="item"><b>Autostart</b><small>Program som startar när datorn startar.</small></div>
+      <div class="item"><b>Roblox-mappar</b><small>Ingår i filerna ovan, där fusk ofta ligger.</small></div>
+    </div>
+  </div>
+  <div class="card not">
+    <b>Det här skickas, och det här skickas inte</b>
+    <ul>
+      <li><b>Skickas:</b> bara träffar: filnamn, mappen (utan ditt Windows-användarnamn), storlek, datum och fingeravtryck (SHA-256).</li>
+      <li><b>Skickas inte:</b> en lista över dina filer, filernas innehåll, bilder, dokument, lösenord, webbläsardata eller något annat.</li>
+      <li>Appen ändrar eller raderar ingenting, körs inte i bakgrunden och startar inte själv. När du stänger den är den borta.</li>
+      <li>Resultatet ser administratörer. Ingen blir automatiskt avstängd av resultatet. Det sparas i 30 dagar.</li>
+    </ul>
+  </div>
+  <div class="card">
+    <b>Dina rättigheter</b>
+    <ul>
+      <li><b>Det är frivilligt.</b> Du kan säga nej, stänga appen eller avbryta mitt i. Då skickas ingenting. Fråga administratören vad som gäller om du säger nej innan du bestämmer dig.</li>
+      <li><b>Kör bara på din egen dator.</b> Är datorn någon annans (familj, skola, jobb) ska du inte köra den här.</li>
+      <li><b>Du är under 15 år?</b> Be en vårdnadshavare titta med och godkänna innan du startar.</li>
+      <li>Resultatet sparas i 30 dagar och raderas sedan. Du kan be en administratör radera det tidigare. Ansvarig för uppgifterna är GSRP:s ledning.</li>
+    </ul>
+  </div>
+  <div class="card">
+    <b>Din engångskod</b>
+    <p class="mut">Du fick den av en administratör. Den gäller en gång och bara en kort stund.</p>
+    <input id="code" type="text" maxlength="9" placeholder="XXXX-XXXX" autocomplete="off" spellcheck="false">
+    <label class="chk" style="margin-top:12px"><input id="ok" type="checkbox"><span>Jag har läst vad kontrollen gör och godkänner att träffarna skickas till GSRP:s administratörer.</span></label>
+    <label class="chk" style="margin-top:8px"><input id="own" type="checkbox"><span>Det här är min egen dator, och jag är 15 år eller äldre (eller har en vårdnadshavares godkännande).</span></label>
+    <div id="e1" class="err"></div>
+    <div class="row"><button id="go" disabled>Starta kontrollen</button><button class="alt" id="no">Avbryt, jag vill inte</button></div>
+  </div>
+</section>
+
+<section id="s2" class="hide">
+  <h1>Kontrollen pågår</h1>
+  <p class="mut" id="who"></p>
+  <div class="card">
+    <b id="phase">Startar …</b>
+    <div class="bar"><i></i></div>
+    <div class="cur" id="cur"></div>
+    <div class="counts" style="margin-top:12px"><div><b id="nf">0</b>filer</div><div><b id="nd">0</b>mappar</div><div><b id="nh">0</b>träffar</div></div>
+  </div>
+  <p class="mut">Det kan ta några minuter. Du kan använda datorn som vanligt. Inget skickas förrän kontrollen är klar.</p>
+  <div class="row"><button class="alt" id="cancel">Avbryt kontrollen (inget skickas)</button></div>
+</section>
+
+<section id="s3" class="hide">
+  <h1 id="rt">Klart</h1>
+  <p id="rs" class="mut"></p>
+  <div class="card"><b>Det här skickades till administratörerna</b><div id="list" style="margin-top:8px"></div></div>
+  <p class="mut">En träff betyder inte att du har gjort något fel. Vissa filer kan vara falsklarm, och en administratör tittar på varje träff innan något beslut tas.</p>
+  <div class="row"><button id="done">Stäng</button></div>
+</section>
+
+</main>
+<script>
+const $ = (id) => document.getElementById(id)
+const show = (n) => ['s1','s2','s3'].forEach((s) => $(s).classList.toggle('hide', s !== 's' + n))
+const PHASE = { program: 'Kollar program som körs …', autostart: 'Kollar autostart …', filer: 'Går igenom filer …', signaturer: 'Kollar signaturer på träffarna …', klar: 'Avslutar …' }
+const VERD = { bekraftad: 'Bekräftad träff', sannolik: 'Sannolik träff', osaker: 'Osäker träff', ingen: 'Ingen träff' }
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]))
+
+const code = $('code'), ok = $('ok'), own = $('own'), go = $('go')
+const refresh = () => (go.disabled = !(ok.checked && own.checked && code.value.replace(/[^A-Za-z0-9]/g, '').length === 8))
+code.addEventListener('input', () => {
+  const raw = code.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8)
+  code.value = raw.length > 4 ? raw.slice(0, 4) + '-' + raw.slice(4) : raw
+  refresh()
+})
+ok.addEventListener('change', refresh)
+own.addEventListener('change', refresh)
+$('no').onclick = () => window.kontroll.quit()
+$('done').onclick = () => window.kontroll.quit()
+$('cancel').onclick = () => window.kontroll.cancel()
+window.kontroll.onProgress((p) => {
+  $('phase').textContent = PHASE[p.phase] || 'Arbetar …'
+  $('cur').textContent = p.current || ''
+  $('nf').textContent = p.files.toLocaleString('sv-SE')
+  $('nd').textContent = p.dirs.toLocaleString('sv-SE')
+  $('nh').textContent = p.findings
+})
+
+go.onclick = async () => {
+  $('e1').textContent = ''
+  go.disabled = true
+  const r = await window.kontroll.start(code.value)
+  if (!r.ok) { $('e1').textContent = r.error; refresh(); return }
+  $('who').textContent = 'Kontroll för ' + r.playerName
+  show(2)
+  const res = await window.kontroll.scan()
+  if (res.aborted) { $('rt').textContent = 'Avbruten'; $('rs').textContent = 'Du avbröt kontrollen. Ingenting har skickats.'; $('list').innerHTML = '<span class="mut">Ingenting.</span>'; show(3); return }
+  if (!res.ok) { $('rt').textContent = 'Något gick fel'; $('rs').textContent = res.error; show(3); return }
+  const n = res.findings.length
+  $('rt').textContent = n ? 'Klart: ' + n + ' träff' + (n > 1 ? 'ar' : '') : 'Klart: inga träffar'
+  $('rs').textContent = (res.sent ? 'Resultatet är skickat. ' : 'Resultatet kunde INTE skickas (' + esc(res.error) + '). Be administratören om en ny kod. ') + res.stats.files.toLocaleString('sv-SE') + ' filer och ' + res.stats.processes + ' program kollades.'
+  $('list').innerHTML = n ? res.findings.map((f) => '<div class="f"><span class="pill p-' + f.tier + '">' + VERD[f.tier] + '</span> <b>' + esc(f.name) + '</b><small>' + esc(f.dir) + ' · ' + esc(f.label) + '</small></div>').join('') : '<span class="mut">Inga filer eller sökvägar skickades. Bara att inget hittades.</span>'
+  show(3)
+}
+</script>
+</body>
+</html>

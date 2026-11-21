@@ -1,0 +1,26 @@
+# GSRP Kontroll (frivillig säkerhetskontroll). Fristående från resten av projektet, precis som desktop/.
+appId: se.gsrp.kontroll
+productName: GSRP Kontroll
+copyright: GSRP
+
+directories:
+  output: release
+
+files:
+  - main.cjs
+  - preload.cjs
+  - scanner.cjs
+  - rules.cjs
+  - index.html
+  - icon.png
+  - package.json
+
+win:
+  target:
+    - target: portable
+      arch: [x64]
+  icon: icon.png
+
+# Portabel .exe: ingen installation, ingenting läggs i autostart, och inget ligger kvar när den stängs.
+portable:
+  artifactName: GSRP-Kontroll.${ext}
