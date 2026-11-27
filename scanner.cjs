@@ -140,7 +140,7 @@ function nameTier(rule, kind, e) {
 function sha256File(file) {
   return new Promise((resolve) => {
     const h = crypto.createHash('sha256')
-    const s = fs.createReadStream(file)
+    const s = fs.createReadStream(file, { highWaterMark: 1024 * 1024 })
     s.on('data', (d) => h.update(d))
     s.on('end', () => resolve(h.digest('hex')))
     s.on('error', () => resolve(null))
@@ -295,6 +295,15 @@ async function scan({ rules, control = { aborted: false }, onProgress = () => {}
     }
   }
 
+  // Många filer kollas samtidigt (disken och processorn räcker till mer än en i taget). Resultatet blir detsamma, bara snabbare.
+  const CONCURRENCY = 24
+  const inflight = new Set()
+  async function spawn(fn) {
+    while (inflight.size >= CONCURRENCY) await Promise.race(inflight)
+    const p = fn().catch(() => {}).finally(() => inflight.delete(p))
+    inflight.add(p)
+  }
+
   async function walk(root) {
     const stack = [root]
     while (stack.length) {
@@ -324,7 +333,9 @@ async function scan({ rules, control = { aborted: false }, onProgress = () => {}
             stack.push(path.join(dir, entry.name))
           } else if (entry.isFile()) {
             stats.files++
-            await inspectFile(dir, entry.name, ext(entry.name))
+            const fileDir = dir
+            const fileName = entry.name
+            await spawn(() => inspectFile(fileDir, fileName, ext(fileName)))
             if (stats.files % 400 === 0) {
               emit('filer')
               await new Promise((r) => setImmediate(r))
@@ -339,6 +350,18 @@ async function scan({ rules, control = { aborted: false }, onProgress = () => {}
 
   const win = process.platform === 'win32'
   const ps = (script) => run('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', script], 30000)
+  // De långsamma Windows-kommandona startas direkt och körs samtidigt med varandra
+  const regKeys = [
+    'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run',
+    'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\RunOnce',
+    'HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run',
+    'HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\RunOnce',
+    'HKLM\\Software\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Run',
+  ]
+  const procP = win ? ps('Get-CimInstance Win32_Process | Select-Object Name,ExecutablePath | ConvertTo-Csv -NoTypeInformation') : run('ps', ['-eo', 'comm='])
+  const regP = win ? Promise.all(regKeys.map((k) => run('reg', ['query', k]))) : Promise.resolve([])
+  const taskP = win ? run('schtasks', ['/query', '/fo', 'csv', '/v', '/nh'], 40000) : Promise.resolve('')
+  const svcP = win ? ps('Get-CimInstance Win32_Service | Select-Object Name,PathName | ConvertTo-Csv -NoTypeInformation') : Promise.resolve('')
 
   // 1. Körande program (namn, sökväg och fingeravtryck på programfilen, så att omdöpta program också hittas)
   emit('program', true)
@@ -349,7 +372,7 @@ async function scan({ rules, control = { aborted: false }, onProgress = () => {}
     if (exe) procs.get(n).add(exe)
   }
   if (win) {
-    const out = await ps('Get-CimInstance Win32_Process | Select-Object Name,ExecutablePath | ConvertTo-Csv -NoTypeInformation')
+    const out = await procP
     for (const line of out.split(/\r?\n/).slice(1)) {
       const f = csvFields(line)
       if (f[0]) addProc(f[0].trim(), (f[1] ?? '').trim())
@@ -358,7 +381,7 @@ async function scan({ rules, control = { aborted: false }, onProgress = () => {}
       for (const line of (await run('tasklist', ['/fo', 'csv', '/nh'])).split(/\r?\n/)) addProc((line.match(/^"([^"]+)"/)?.[1] ?? '').trim())
     }
   } else {
-    for (const line of (await run('ps', ['-eo', 'comm='])).split(/\r?\n/)) addProc(line.trim())
+    for (const line of (await procP).split(/\r?\n/)) addProc(line.trim())
   }
   stats.processes = procs.size
   for (const [n, exes] of procs) {
@@ -387,15 +410,8 @@ async function scan({ rules, control = { aborted: false }, onProgress = () => {}
   }
   if (win) {
     emit('autostart', true)
-    const regKeys = [
-      'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run',
-      'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\RunOnce',
-      'HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run',
-      'HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\RunOnce',
-      'HKLM\\Software\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Run',
-    ]
-    for (const key of regKeys) {
-      for (const line of (await run('reg', ['query', key])).split(/\r?\n/)) {
+    for (const regOut of await regP) {
+      for (const line of regOut.split(/\r?\n/)) {
         const m = line.match(/^\s+(.+?)\s+REG_\w+\s+(.*)$/)
         if (m) await checkAutostart(m[1], m[2], 'register')
       }
@@ -411,7 +427,7 @@ async function scan({ rules, control = { aborted: false }, onProgress = () => {}
       for (const n of names) if (n.toLowerCase() !== 'desktop.ini') await checkAutostart(n, path.join(d, n), 'startmapp')
     }
     const seenTasks = new Set()
-    for (const line of (await run('schtasks', ['/query', '/fo', 'csv', '/v', '/nh'], 40000)).split(/\r?\n/)) {
+    for (const line of (await taskP).split(/\r?\n/)) {
       const f = csvFields(line)
       const taskName = f[1]
       if (!taskName || seenTasks.has(taskName)) continue
@@ -420,7 +436,7 @@ async function scan({ rules, control = { aborted: false }, onProgress = () => {}
       stats.tasks++
       await checkAutostart(taskName.replace(/^\\/, ''), f[8] ?? '', 'schemalagd uppgift')
     }
-    const svcOut = await ps('Get-CimInstance Win32_Service | Select-Object Name,PathName | ConvertTo-Csv -NoTypeInformation')
+    const svcOut = await svcP
     for (const line of svcOut.split(/\r?\n/).slice(1)) {
       const f = csvFields(line)
       if (!f[0] || !f[1] || /[\\/]windows[\\/]/i.test(f[1])) continue
@@ -510,18 +526,18 @@ async function scan({ rules, control = { aborted: false }, onProgress = () => {}
   stats.drives = rootList.length
   emit('papperskorg', true)
   for (const r of rootList) await scanRecycle(r)
-  for (const r of rootList) {
-    if (control.aborted) break
-    await walk(r)
-  }
+  await Promise.all(rootList.map((r) => walk(r))) // alla diskar samtidigt
+  await Promise.all(inflight)
 
   // 4. Digital signatur för träffarna (bara Windows, bara ett fåtal)
   if (process.platform === 'win32') {
     emit('signaturer', true)
-    for (const f of findings.filter((x) => x.kind === 'fil' && x.dir).slice(0, 15)) {
-      if (control.aborted) break
-      f.signed = await signatureOf(path.join(f.dir.replace('<användare>', os.userInfo().username), f.name))
-    }
+    await Promise.all(
+      findings.filter((x) => x.kind === 'fil' && x.dir).slice(0, 15).map(async (f) => {
+        if (control.aborted) return
+        f.signed = await signatureOf(path.join(f.dir.replace('<användare>', os.userInfo().username), f.name))
+      }),
+    )
   }
 
   findings.sort((a, b) => TIER_RANK[b.tier] - TIER_RANK[a.tier])
