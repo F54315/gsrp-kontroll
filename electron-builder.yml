@@ -1,6 +1,6 @@
-# GSRP Kontroll (frivillig säkerhetskontroll). Fristående från resten av projektet, precis som desktop/.
+# GSRP PCcheck (frivillig säkerhetskontroll). Fristående från resten av projektet, precis som desktop/.
 appId: se.gsrp.kontroll
-productName: GSRP Kontroll
+productName: GSRP PCcheck
 copyright: GSRP
 
 directories:
@@ -23,4 +23,4 @@ win:
 
 # Portabel .exe: ingen installation, ingenting läggs i autostart, och inget ligger kvar när den stängs.
 portable:
-  artifactName: GSRP-Kontroll.${ext}
+  artifactName: GSRP-PCcheck.${ext}

@@ -1,5 +1,5 @@
 'use strict'
-// GSRP Kontroll. Ett synligt fönster som spelaren startar själv. Inget körs i bakgrunden, inget läggs i autostart, och allt går att avbryta.
+// GSRP PCcheck. Ett synligt fönster som spelaren startar själv. Inget körs i bakgrunden, inget läggs i autostart, och allt går att avbryta.
 // Flöde: spelaren skriver en engångskod -> appen hämtar reglerna -> skannar lokalt -> skickar bara träffarna (signerade) till servern.
 const { app, BrowserWindow, ipcMain, shell } = require('electron')
 const crypto = require('crypto')
@@ -24,7 +24,7 @@ async function call(body) {
 
 function createWindow() {
   win = new BrowserWindow({
-    width: 940, height: 700, minWidth: 760, minHeight: 600, title: 'GSRP Kontroll', backgroundColor: '#0d121c', autoHideMenuBar: true,
+    width: 940, height: 700, minWidth: 760, minHeight: 600, title: 'GSRP PCcheck', backgroundColor: '#0d121c', autoHideMenuBar: true,
     webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true },
   })
   win.removeMenu()

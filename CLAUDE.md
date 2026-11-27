@@ -1,4 +1,4 @@
-# gsrp-kontroll (GSRP Kontroll)
+# gsrp-kontroll (appen heter GSRP PCcheck)
 
 Eget projekt: frivillig säkerhetskontroll (Windows, Electron) som spelaren startar själv med en engångskod från admin. Appen är fristående (egen mapp, eget git, eget bygge) men **skickar resultatet till CAD:en** (`roblox-erlc`, Admin → Kontroller) via `POST {KONTROLL_API}/api/civil?r=kontroll` (`start` hämtar reglerna, `submit` skickar signerade träffar). Standardadress `https://roblox-erlc.vercel.app`, kan ändras med `KONTROLL_API` (bara vid `npm start`, inte i den färdiga appen).
 

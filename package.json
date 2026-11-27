@@ -2,7 +2,7 @@
   "name": "gsrp-kontroll",
   "private": true,
   "version": "0.1.0",
-  "description": "GSRP Kontroll: frivillig säkerhetskontroll som spelaren själv startar med en engångskod",
+  "description": "GSRP PCcheck: frivillig säkerhetskontroll som spelaren själv startar med en engångskod",
   "main": "main.cjs",
   "scripts": {
     "start": "electron .",
