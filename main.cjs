@@ -6,7 +6,9 @@ const crypto = require('crypto')
 const path = require('path')
 const { scan } = require('./scanner.cjs')
 
-const API = process.env.KONTROLL_API || 'https://roblox-erlc.vercel.app'
+// I den färdiga appen går serveradressen inte att ändra (annars kan en spelare peka om kontrollen till en egen "server" som alltid svarar rent).
+// KONTROLL_API gäller bara när appen körs från källkoden (npm start) för utveckling.
+const API = (!app.isPackaged && process.env.KONTROLL_API) || 'https://roblox-erlc.vercel.app'
 const VERSION = require('./package.json').version
 let win = null
 let session = null // { code, key, rules, playerName }

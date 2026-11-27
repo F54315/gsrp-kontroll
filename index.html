@@ -41,9 +41,9 @@ button.alt{background:transparent;color:var(--ink);border:1px solid var(--line);
   <div class="card">
     <b>Vad kontrolleras, och varför</b>
     <div class="what" style="margin-top:10px">
-      <div class="item"><b>Filer på dina diskar</b><small>Jämförs med en lista över kända fusk-, DDoS- och stöldprogram (namn, mapp och fingeravtryck). Skript kollas efter tecken på att de stjäl inloggningar.</small></div>
-      <div class="item"><b>Program som körs nu</b><small>För att se om ett känt fuskverktyg är igång.</small></div>
-      <div class="item"><b>Autostart</b><small>Program som startar när datorn startar.</small></div>
+      <div class="item"><b>Filer på dina diskar</b><small>Jämförs med en lista över kända fusk-, DDoS- och stöldprogram (namn, mapp och fingeravtryck). Filnamn inuti zip-filer och i papperskorgen kollas också. Skript, källkod, program (.exe) och appar (app.asar) kollas efter tecken på att de stjäl inloggningar eller IP-adresser.</small></div>
+      <div class="item"><b>Program som körs nu</b><small>För att se om ett känt fuskverktyg är igång, även om det bytt namn. Windows lista över program som körts tidigare kollas också.</small></div>
+      <div class="item"><b>Autostart</b><small>Program som startar när datorn startar: registret, startmappen, schemalagda uppgifter och tjänster.</small></div>
       <div class="item"><b>Roblox-mappar</b><small>Ingår i filerna ovan, där fusk ofta ligger.</small></div>
     </div>
   </div>
@@ -101,7 +101,7 @@ button.alt{background:transparent;color:var(--ink);border:1px solid var(--line);
 <script>
 const $ = (id) => document.getElementById(id)
 const show = (n) => ['s1','s2','s3'].forEach((s) => $(s).classList.toggle('hide', s !== 's' + n))
-const PHASE = { program: 'Kollar program som körs …', autostart: 'Kollar autostart …', filer: 'Går igenom filer …', signaturer: 'Kollar signaturer på träffarna …', klar: 'Avslutar …' }
+const PHASE = { program: 'Kollar program som körs …', autostart: 'Kollar autostart …', historik: 'Kollar program som körts tidigare …', papperskorg: 'Kollar papperskorgen …', filer: 'Går igenom filer …', signaturer: 'Kollar signaturer på träffarna …', klar: 'Avslutar …' }
 const VERD = { bekraftad: 'Bekräftad träff', sannolik: 'Sannolik träff', osaker: 'Osäker träff', ingen: 'Ingen träff' }
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]))
 
